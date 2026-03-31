@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --lime: #c9f542;
+    --forest-dark: #0a1a0f;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-carbon-950 text-white font-body antialiased;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-carbon-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-carbon-600 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-lime-400;
+  }
+
+  ::selection {
+    background: rgba(201, 245, 66, 0.3);
+    color: #fff;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-lime-400 text-carbon-950 font-semibold px-6 py-3 rounded-lg
+      hover:bg-lime-500 active:scale-[0.98] transition-all duration-150 cursor-pointer
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center gap-2 border border-white/20 text-white font-medium px-6 py-3 rounded-lg
+      hover:border-lime-400 hover:text-lime-400 active:scale-[0.98] transition-all duration-150 cursor-pointer;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 text-white/60 font-medium px-4 py-2 rounded-lg
+      hover:text-white hover:bg-white/5 transition-all duration-150 cursor-pointer;
+  }
+
+  .card {
+    @apply bg-carbon-800 border border-white/5 rounded-2xl p-6;
+  }
+
+  .card-hover {
+    @apply card hover:border-lime-400/30 hover:bg-carbon-700 transition-all duration-200 cursor-pointer;
+  }
+
+  .input {
+    @apply w-full bg-carbon-700 border border-white/10 rounded-lg px-4 py-3 text-white
+      placeholder:text-white/30 focus:outline-none focus:border-lime-400/60 focus:ring-1 focus:ring-lime-400/20
+      transition-all duration-150;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-white/60 mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  .badge-active {
+    @apply badge bg-lime-400/10 text-lime-400 border border-lime-400/20;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-400/10 text-yellow-400 border border-yellow-400/20;
+  }
+
+  .badge-error {
+    @apply badge bg-red-400/10 text-red-400 border border-red-400/20;
+  }
+
+  .badge-neutral {
+    @apply badge bg-white/5 text-white/50 border border-white/10;
+  }
+
+  .stat-card {
+    @apply card flex flex-col gap-1;
+  }
+
+  .stat-value {
+    @apply text-3xl font-display font-bold text-white;
+  }
+
+  .stat-label {
+    @apply text-sm text-white/40 font-body;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-display font-bold text-white;
+  }
+
+  .section-subtitle {
+    @apply text-white/50 text-lg mt-3 max-w-2xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-lime-400 to-emerald-400 bg-clip-text text-transparent;
+  }
+
+  /* Nav link */
+  .nav-link {
+    @apply text-white/60 hover:text-white text-sm font-medium transition-colors duration-150;
+  }
+  .nav-link.active {
+    @apply text-lime-400;
+  }
+
+  /* Score number bubble */
+  .score-bubble {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center font-mono font-bold text-lg
+      bg-carbon-700 border border-white/10 text-lime-400;
+  }
+
+  /* Noise texture overlay */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    border-radius: inherit;
+  }
+}
