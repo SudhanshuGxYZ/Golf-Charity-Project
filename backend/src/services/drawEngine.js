@@ -1,200 +1,48 @@
 import supabase from '../utils/supabase.js';
 
-/**
- * Generate 5 draw numbers using random or algorithmic approach.
- * Stableford range: 1–45
- */
-export async function generateDrawNumbers(method = 'random') {
-  if (method === 'random') {
-    return generateRandomNumbers();
-  } else {
-    return generateAlgorithmicNumbers();
-  }
+// Load prize pool config from DB
+export async function getPoolConfig() {
+  const { data } = await supabase.from('prize_pool_config').select('*').eq('is_active', true).single();
+  return data || { five_match_pct: 40, four_match_pct: 35, three_match_pct: 25, subscription_pool_pct: 60, monthly_price: 29.99, yearly_price: 299.99 };
 }
 
-function generateRandomNumbers() {
-  const numbers = new Set();
-  while (numbers.size < 5) {
-    numbers.add(Math.floor(Math.random() * 45) + 1);
-  }
-  return Array.from(numbers).sort((a, b) => a - b);
+function randomNumbers() {
+  const s = new Set();
+  while (s.size < 5) s.add(Math.floor(Math.random() * 45) + 1);
+  return [...s].sort((a, b) => a - b);
 }
 
-/**
- * Algorithmic draw: weighted toward scores that appear rarely
- * (gives underdogs a better chance, creates more winners).
- */
-async function generateAlgorithmicNumbers() {
-  const { data: scores } = await supabase
-    .from('scores')
-    .select('score');
+async function algorithmicNumbers() {
+  const { data: scores } = await supabase.from('scores').select('score');
+  if (!scores || scores.length < 10) return randomNumbers();
 
-  if (!scores || scores.length < 10) {
-    return generateRandomNumbers();
-  }
-
-  // Count frequency of each score
   const freq = {};
   for (let i = 1; i <= 45; i++) freq[i] = 0;
   scores.forEach(({ score }) => { if (freq[score] !== undefined) freq[score]++; });
 
-  // Inverse frequency weighting — rare scores have higher weight
   const maxFreq = Math.max(...Object.values(freq));
   const weights = {};
-  for (let i = 1; i <= 45; i++) {
-    weights[i] = maxFreq - freq[i] + 1; // +1 ensures no zero weight
-  }
+  for (let i = 1; i <= 45; i++) weights[i] = maxFreq - freq[i] + 1;
 
   const selected = new Set();
   while (selected.size < 5) {
-    const num = weightedRandom(weights);
-    selected.add(num);
+    const total = Object.values(weights).reduce((a, b) => a + b, 0);
+    let rand = Math.random() * total;
+    for (const [num, w] of Object.entries(weights)) {
+      rand -= w;
+      if (rand <= 0) { selected.add(+num); break; }
+    }
   }
-  return Array.from(selected).sort((a, b) => a - b);
+  return [...selected].sort((a, b) => a - b);
 }
 
-function weightedRandom(weights) {
-  const total = Object.values(weights).reduce((a, b) => a + b, 0);
-  let rand = Math.random() * total;
-  for (const [num, weight] of Object.entries(weights)) {
-    rand -= weight;
-    if (rand <= 0) return parseInt(num);
-  }
-  return 1;
+export async function generateDrawNumbers(method = 'random') {
+  return method === 'algorithmic' ? algorithmicNumbers() : randomNumbers();
 }
 
-/**
- * Run a draw for a given month/year.
- * Finds all eligible subscribers, matches scores, determines winners.
- */
-export async function executeDraw(drawId) {
-  // Get the draw config
-  const { data: draw, error: drawErr } = await supabase
-    .from('draws')
-    .select('*')
-    .eq('id', drawId)
-    .single();
-
-  if (drawErr || !draw) throw new Error('Draw not found');
-  if (draw.status !== 'pending') throw new Error('Draw already executed or not pending');
-
-  const winningNumbers = draw.winning_numbers;
-
-  // Get all active subscribers with their 5 scores
-  const { data: subscribers } = await supabase
-    .from('subscriptions')
-    .select(`
-      user_id,
-      users!inner(id, email, full_name),
-      scores:scores(score)
-    `)
-    .eq('status', 'active');
-
-  // Actually fetch scores separately per user for correctness
-  const { data: allScores } = await supabase
-    .from('scores')
-    .select('user_id, score');
-
-  const userScoreMap = {};
-  allScores?.forEach(({ user_id, score }) => {
-    if (!userScoreMap[user_id]) userScoreMap[user_id] = new Set();
-    userScoreMap[user_id].add(score);
-  });
-
-  const winners = { five: [], four: [], three: [] };
-
-  subscribers?.forEach(({ user_id }) => {
-    const userScores = userScoreMap[user_id] || new Set();
-    const matchCount = winningNumbers.filter(n => userScores.has(n)).length;
-
-    if (matchCount === 5) winners.five.push(user_id);
-    else if (matchCount === 4) winners.four.push(user_id);
-    else if (matchCount === 3) winners.three.push(user_id);
-  });
-
-  // Calculate prize pool
-  const activeSubCount = subscribers?.length || 0;
-  const { data: planData } = await supabase
-    .from('subscriptions')
-    .select('plan')
-    .eq('status', 'active');
-
-  let totalPool = 0;
-  planData?.forEach(({ plan }) => {
-    totalPool += plan === 'monthly' ? 29.99 * 0.6 : (299.99 / 12) * 0.6; // 60% to prize pool
-  });
-
-  // Check for jackpot rollover
-  const { data: prevDraw } = await supabase
-    .from('draws')
-    .select('jackpot_rollover')
-    .eq('status', 'published')
-    .order('draw_date', { ascending: false })
-    .limit(1)
-    .single();
-
-  const jackpotRollover = prevDraw?.jackpot_rollover || 0;
-  const jackpotPool = totalPool * 0.40 + jackpotRollover;
-  const fourMatchPool = totalPool * 0.35;
-  const threeMatchPool = totalPool * 0.25;
-
-  // Split prizes among multiple winners
-  const prizes = {
-    five_match: winners.five.length > 0 ? jackpotPool / winners.five.length : 0,
-    four_match: winners.four.length > 0 ? fourMatchPool / winners.four.length : 0,
-    three_match: winners.three.length > 0 ? threeMatchPool / winners.three.length : 0,
-  };
-
-  const newJackpotRollover = winners.five.length === 0 ? jackpotPool : 0;
-
-  // Save results in draw_results table
-  const winnerInserts = [
-    ...winners.five.map(user_id => ({
-      draw_id: drawId, user_id, match_type: '5-match',
-      prize_amount: prizes.five_match, status: 'pending',
-    })),
-    ...winners.four.map(user_id => ({
-      draw_id: drawId, user_id, match_type: '4-match',
-      prize_amount: prizes.four_match, status: 'pending',
-    })),
-    ...winners.three.map(user_id => ({
-      draw_id: drawId, user_id, match_type: '3-match',
-      prize_amount: prizes.three_match, status: 'pending',
-    })),
-  ];
-
-  if (winnerInserts.length > 0) {
-    await supabase.from('draw_results').insert(winnerInserts);
-  }
-
-  // Update draw status
-  await supabase.from('draws').update({
-    status: 'published',
-    total_pool: totalPool,
-    jackpot_rollover: newJackpotRollover,
-    winner_count: winnerInserts.length,
-    published_at: new Date().toISOString(),
-  }).eq('id', drawId);
-
-  return {
-    draw,
-    winningNumbers,
-    winners,
-    prizes,
-    jackpotRollover: newJackpotRollover,
-    totalParticipants: activeSubCount,
-  };
-}
-
-/**
- * Simulate a draw without saving results — for admin preview.
- */
 export async function simulateDraw(method = 'random') {
   const numbers = await generateDrawNumbers(method);
-
-  const { data: allScores } = await supabase
-    .from('scores')
-    .select('user_id, score');
+  const { data: allScores } = await supabase.from('scores').select('user_id, score');
 
   const userScoreMap = {};
   allScores?.forEach(({ user_id, score }) => {
@@ -210,5 +58,120 @@ export async function simulateDraw(method = 'random') {
     else if (count === 3) matches.three++;
   });
 
-  return { numbers, projectedMatches: matches };
+  return { numbers, projectedMatches: matches, totalEligible: Object.keys(userScoreMap).length };
+}
+
+export async function executeDraw(drawId, adminId) {
+  const { data: draw } = await supabase.from('draws').select('*').eq('id', drawId).single();
+  if (!draw) throw new Error('Draw not found');
+  if (draw.status === 'published') throw new Error('Draw already published');
+  if (!draw.winning_numbers) throw new Error('No winning numbers set');
+
+  const cfg = await getPoolConfig();
+  const winNums = draw.winning_numbers;
+
+  // Only eligible: active subscribers who completed a score session this draw month
+  const { data: completeSessions } = await supabase
+    .from('score_sessions')
+    .select('user_id')
+    .eq('draw_month', draw.draw_month)
+    .eq('is_complete', true);
+
+  const sessionUserIds = [...new Set(completeSessions?.map(s => s.user_id) || [])];
+
+  const { data: activeSubs } = await supabase
+    .from('subscriptions')
+    .select('user_id, plan')
+    .eq('status', 'active')
+    .in('user_id', sessionUserIds);
+
+  const subMap = {};
+  activeSubs?.forEach(s => { subMap[s.user_id] = s.plan; });
+  const eligibleIds = Object.keys(subMap);
+
+  // Calculate prize pool from active subscribers
+  let totalPool = 0;
+  activeSubs?.forEach(({ plan }) => {
+    const sub = plan === 'monthly' ? cfg.monthly_price : cfg.yearly_price / 12;
+    totalPool += sub * (cfg.subscription_pool_pct / 100);
+  });
+
+  const rolloverIn = draw.jackpot_rollover_in || 0;
+  const jackpotBase = totalPool * (cfg.five_match_pct / 100) + rolloverIn;
+  const fourPool = totalPool * (cfg.four_match_pct / 100);
+  const threePool = totalPool * (cfg.three_match_pct / 100);
+
+  // Match scores
+  const { data: allScores } = await supabase.from('scores').select('user_id, score').in('user_id', eligibleIds);
+  const userScoreMap = {};
+  allScores?.forEach(({ user_id, score }) => {
+    if (!userScoreMap[user_id]) userScoreMap[user_id] = new Set();
+    userScoreMap[user_id].add(score);
+  });
+
+  const winners = { five: [], four: [], three: [] };
+  const winnerMatchNums = {};
+  eligibleIds.forEach(uid => {
+    const scores = userScoreMap[uid] || new Set();
+    const matched = winNums.filter(n => scores.has(n));
+    winnerMatchNums[uid] = matched;
+    if (matched.length === 5) winners.five.push(uid);
+    else if (matched.length === 4) winners.four.push(uid);
+    else if (matched.length === 3) winners.three.push(uid);
+  });
+
+  const jackpotRollover = winners.five.length === 0 ? jackpotBase : 0;
+  const prizes = {
+    five: winners.five.length ? jackpotBase / winners.five.length : 0,
+    four: winners.four.length ? fourPool / winners.four.length : 0,
+    three: winners.three.length ? threePool / winners.three.length : 0,
+  };
+
+  const winnerInserts = [
+    ...winners.five.map(uid => ({ draw_id: drawId, user_id: uid, match_type: '5-match', matched_numbers: winnerMatchNums[uid], prize_amount: prizes.five, status: 'pending' })),
+    ...winners.four.map(uid => ({ draw_id: drawId, user_id: uid, match_type: '4-match', matched_numbers: winnerMatchNums[uid], prize_amount: prizes.four, status: 'pending' })),
+    ...winners.three.map(uid => ({ draw_id: drawId, user_id: uid, match_type: '3-match', matched_numbers: winnerMatchNums[uid], prize_amount: prizes.three, status: 'pending' })),
+  ];
+
+  if (winnerInserts.length > 0) {
+    await supabase.from('draw_results').insert(winnerInserts);
+    // Notify winners
+    await supabase.from('notifications').insert(
+      winnerInserts.map(w => ({
+        user_id: w.user_id, type: 'draw_result',
+        title: `🏆 You won in the ${draw.draw_month} draw!`,
+        message: `You matched ${w.match_type} and won ₹${Number(w.prize_amount).toFixed(2)}. Log in to submit your proof and claim your prize.`,
+        reference_id: drawId, reference_type: 'draw',
+      }))
+    );
+  }
+
+  // Notify non-winners
+  const winnerIds = new Set(winnerInserts.map(w => w.user_id));
+  const nonWinners = eligibleIds.filter(uid => !winnerIds.has(uid));
+  if (nonWinners.length > 0) {
+    await supabase.from('notifications').insert(
+      nonWinners.slice(0, 500).map(uid => ({
+        user_id: uid, type: 'draw_result',
+        title: `${draw.draw_month} draw results are in`,
+        message: `The ${draw.draw_month} draw has been completed. You didn't match enough numbers this time — keep your scores updated for next month!`,
+        reference_id: drawId, reference_type: 'draw',
+      }))
+    );
+  }
+
+  await supabase.from('draws').update({
+    status: 'published',
+    total_pool: Math.round(totalPool * 100) / 100,
+    five_match_pool: Math.round(jackpotBase * 100) / 100,
+    four_match_pool: Math.round(fourPool * 100) / 100,
+    three_match_pool: Math.round(threePool * 100) / 100,
+    winner_count: winnerInserts.length,
+    participants_count: eligibleIds.length,
+    jackpot_rollover: Math.round(jackpotRollover * 100) / 100,
+    published_at: new Date().toISOString(),
+    executed_by: adminId,
+  }).eq('id', drawId);
+
+  return { winningNumbers: winNums, winners, prizes, jackpotRollover, totalPool, participants: eligibleIds.length };
 }

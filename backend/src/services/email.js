@@ -74,7 +74,7 @@ export async function sendDrawResultEmail(email, name, matchType, prizeAmount) {
     html: baseTemplate(`
       <p>Hi <span class="highlight">${name}</span>,</p>
       ${isWinner ? `
-        <p>Congratulations! You matched <span class="highlight">${matchType}</span> in this month's draw and have won <span class="highlight">£${prizeAmount.toFixed(2)}</span>!</p>
+        <p>Congratulations! You matched <span class="highlight">${matchType}</span> in this month's draw and have won <span class="highlight">₹${prizeAmount.toFixed(2)}</span>!</p>
         <p>Please log in to your dashboard to upload your verification proof and claim your prize.</p>
         <a href="${process.env.FRONTEND_URL}/dashboard?tab=winnings" class="cta">Claim Your Prize →</a>
       ` : `
@@ -93,7 +93,7 @@ export async function sendPayoutEmail(email, name, amount) {
     subject: '💰 Your prize payout has been processed',
     html: baseTemplate(`
       <p>Hi <span class="highlight">${name}</span>,</p>
-      <p>Great news! Your prize of <span class="highlight">£${amount.toFixed(2)}</span> has been approved and your payout is being processed.</p>
+      <p>Great news! Your prize of <span class="highlight">₹${amount.toFixed(2)}</span> has been approved and your payout is being processed.</p>
       <p>You should receive your payment within 3–5 business days.</p>
       <a href="${process.env.FRONTEND_URL}/dashboard?tab=winnings" class="cta">View Winnings →</a>
     `),

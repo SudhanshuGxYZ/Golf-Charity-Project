@@ -51,7 +51,7 @@ export default function PricingPage() {
             </div>
 
             <div className="flex items-baseline gap-1 mb-8">
-              <span className="text-5xl font-display font-black text-white">£29</span>
+              <span className="text-5xl font-display font-black text-white">₹29</span>
               <span className="text-white/30">.99</span>
               <span className="text-white/30 text-sm ml-1">/ month</span>
             </div>
@@ -87,15 +87,15 @@ export default function PricingPage() {
 
             <div className="mb-6">
               <h2 className="font-display font-bold text-2xl text-white mb-1">Yearly</h2>
-              <p className="text-white/40 text-sm">Save £60 per year</p>
+              <p className="text-white/40 text-sm">Save ₹60 per year</p>
             </div>
 
             <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-5xl font-display font-black text-white">£24</span>
+              <span className="text-5xl font-display font-black text-white">₹24</span>
               <span className="text-white/30">.99</span>
               <span className="text-white/30 text-sm ml-1">/ month</span>
             </div>
-            <p className="text-white/30 text-xs mb-8">Billed as £299.99 per year</p>
+            <p className="text-white/30 text-xs mb-8">Billed as ₹299.99 per year</p>
 
             <ul className="space-y-3 mb-8">
               {features.map((f, i) => (

@@ -40,6 +40,12 @@ export const requireAdmin = (req, res, next) => {
 };
 
 export const requireSubscription = async (req, res, next) => {
+  // Admins have unlimited access by default
+  if (req.user?.role === 'admin') {
+    req.subscription = { status: 'active', plan: 'unlimited', current_period_end: null };
+    return next();
+  }
+
   try {
     const { data: sub } = await supabase
       .from('subscriptions')

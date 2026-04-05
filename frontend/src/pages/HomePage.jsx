@@ -20,7 +20,7 @@ export default function HomePage() {
   ];
 
   const stats = [
-    { value: '£' + ((upcomingDraw?.estimatedPool || 0) + (upcomingDraw?.jackpotRollover || 0)).toFixed(0), label: 'Current Prize Pool' },
+    { value: '₹' + ((upcomingDraw?.estimatedPool || 0) + (upcomingDraw?.jackpotRollover || 0)).toFixed(0), label: 'Current Prize Pool' },
     { value: upcomingDraw?.activeSubscribers || '—', label: 'Active Players' },
     { value: '10%+', label: 'Goes to Charity' },
     { value: '3', label: 'Ways to Win Monthly' },
@@ -112,7 +112,7 @@ export default function HomePage() {
 
               {/* Floating badge */}
               <div className="absolute -top-4 -right-4 bg-lime-400 text-carbon-950 rounded-2xl px-4 py-2 font-bold text-sm shadow-lg">
-                £847 prize pool
+                ₹847 prize pool
               </div>
 
               {/* Charity chip */}
@@ -195,12 +195,12 @@ export default function HomePage() {
                   </div>
                   <div className="flex justify-between items-center py-3 border-b border-white/5">
                     <span className="text-white/40 text-sm">Prize Pool</span>
-                    <span className="text-lime-400 font-bold text-xl">£{(upcomingDraw.estimatedPool + upcomingDraw.jackpotRollover).toFixed(2)}</span>
+                    <span className="text-lime-400 font-bold text-xl">₹{(upcomingDraw.estimatedPool + upcomingDraw.jackpotRollover).toFixed(2)}</span>
                   </div>
                   {upcomingDraw.jackpotRollover > 0 && (
                     <div className="flex justify-between items-center py-3 border-b border-white/5">
                       <span className="text-white/40 text-sm">Jackpot Rollover</span>
-                      <span className="text-lime-400/70 font-medium">+£{upcomingDraw.jackpotRollover.toFixed(2)}</span>
+                      <span className="text-lime-400/70 font-medium">+₹{upcomingDraw.jackpotRollover.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center py-3">

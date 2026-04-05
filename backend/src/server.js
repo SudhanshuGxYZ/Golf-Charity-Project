@@ -11,6 +11,7 @@ import subscriptionRoutes from './routes/subscriptions.js';
 import charityRoutes from './routes/charities.js';
 import drawRoutes from './routes/draws.js';
 import adminRoutes from './routes/admin.js';
+import notificationRoutes from './routes/notifications.js';
 import webhookRoutes from './routes/webhooks.js';
 
 dotenv.config();
@@ -50,6 +51,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/charities', charityRoutes);
 app.use('/api/draws', drawRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

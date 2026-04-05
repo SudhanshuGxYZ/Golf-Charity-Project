@@ -61,14 +61,14 @@ export default function DrawsPage() {
             <div className="flex flex-wrap gap-6">
               <div className="text-center">
                 <div className="text-3xl font-display font-bold text-lime-400">
-                  £{((upcoming?.estimatedPool || 0) + (upcoming?.jackpotRollover || 0)).toFixed(0)}
+                  ₹{((upcoming?.estimatedPool || 0) + (upcoming?.jackpotRollover || 0)).toFixed(0)}
                 </div>
                 <div className="text-white/30 text-xs mt-0.5">Prize Pool</div>
               </div>
               {(upcoming?.jackpotRollover || 0) > 0 && (
                 <div className="text-center">
                   <div className="text-3xl font-display font-bold text-yellow-400">
-                    +£{upcoming.jackpotRollover.toFixed(0)}
+                      +₹{upcoming.jackpotRollover.toFixed(0)}
                   </div>
                   <div className="text-white/30 text-xs mt-0.5">Jackpot Rollover</div>
                 </div>
@@ -152,7 +152,7 @@ function DrawCard({ draw }) {
 
         <div className="flex items-center gap-6 text-sm">
           <div className="text-center">
-            <div className="font-display font-bold text-lime-400">£{Number(draw.total_pool || 0).toFixed(2)}</div>
+            <div className="font-display font-bold text-lime-400">₹{Number(draw.total_pool || 0).toFixed(2)}</div>
             <div className="text-white/30 text-xs">Pool</div>
           </div>
           <div className="text-center">
@@ -161,7 +161,7 @@ function DrawCard({ draw }) {
           </div>
           {(draw.jackpot_rollover || 0) > 0 && (
             <div className="text-center">
-              <div className="font-display font-bold text-yellow-400">+£{Number(draw.jackpot_rollover).toFixed(2)}</div>
+              <div className="font-display font-bold text-yellow-400">+₹{Number(draw.jackpot_rollover).toFixed(2)}</div>
               <div className="text-white/30 text-xs">Rolled Over</div>
             </div>
           )}

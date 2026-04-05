@@ -94,7 +94,7 @@ router.post('/donate', authenticate, async (req, res, next) => {
   try {
     const { charity_id, amount } = req.body;
     if (!charity_id || !amount || amount < 1) {
-      return res.status(400).json({ error: 'charity_id and amount (min £1) required' });
+      return res.status(400).json({ error: 'charity_id and amount (min ₹1) required' });
     }
 
     const { data, error } = await supabase

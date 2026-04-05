@@ -23,11 +23,11 @@ export default function CharityDetailPage() {
 
   const handleDonate = async () => {
     const amount = parseFloat(donationAmount);
-    if (!amount || amount < 1) return toast.error('Minimum donation is £1');
+    if (!amount || amount < 1) return toast.error('Minimum donation is ₹1');
     setDonating(true);
     try {
       await api.post('/charities/donate', { charity_id: id, amount });
-      toast.success(`Thank you! £${amount.toFixed(2)} donated 💚`);
+      toast.success(`Thank you! ₹${amount.toFixed(2)} donated 💚`);
       setDonationAmount('');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Donation failed');
@@ -138,7 +138,7 @@ export default function CharityDetailPage() {
             <div className="card border-lime-400/10">
               <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Community Impact</p>
               <div className="text-3xl font-display font-bold text-lime-400">
-                £{totalContributed?.toFixed(2) || '0.00'}
+                ₹{totalContributed?.toFixed(2) || '0.00'}
               </div>
               <p className="text-white/30 text-sm mt-1">contributed by GolfCharity members</p>
             </div>
@@ -160,7 +160,7 @@ export default function CharityDetailPage() {
                 <h3 className="font-semibold text-white mb-3">One-Time Donation</h3>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">£</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">₹</span>
                     <input
                       type="number" min={1} step={1}
                       className="input pl-7"

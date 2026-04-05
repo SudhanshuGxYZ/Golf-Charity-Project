@@ -36,14 +36,14 @@ export const useAuthStore = create((set, get) => ({
   },
 
   login: async (email, password) => {
-    const { data } = await api.post('api/auth/login', { email, password });
+    const { data } = await api.post('/auth/login', { email, password });
     get().setTokens(data.accessToken, data.refreshToken);
     set({ user: data.user, subscription: data.subscription });
     return data;
   },
 
   register: async (payload) => {
-    const { data } = await api.post('api/auth/register', payload);
+    const { data } = await api.post('/auth/register', payload);
     get().setTokens(data.accessToken, data.refreshToken);
     set({ user: data.user, subscription: null });
     return data;
