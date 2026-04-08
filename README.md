@@ -103,7 +103,7 @@ After running `schema.sql`, an admin user is seeded:
 | Email    | `admin@golfcharity.com`   |
 | Password | `Admin@1234`              |
 
-**Change this password immediately after first login.**
+**take some credits from admin to get some credits**
 
 ---
 
